@@ -194,6 +194,7 @@ def get_order(arr,nmax):
     Qab = np.zeros((3,3))
     delta = np.eye(3,3)
     #
+
     
     #
     lab = np.vstack((np.cos(arr), np.sin(arr), np.zeros_like(arr))).reshape(3, nmax, nmax)
@@ -209,6 +210,7 @@ def get_order(arr,nmax):
                   #  Qab[a,b] += 3*lab[a,i,j]*lab[b,i,j] - delta[a,b]
     Qab /= (2 * nmax * nmax)
     eigenvalues, _ = np.linalg.eig(Qab)
+
     return eigenvalues.max()
 #=======================================================================
 def MC_step(arr,Ts,nmax):
@@ -237,6 +239,7 @@ def MC_step(arr,Ts,nmax):
     xran = np.random.randint(0,high=nmax, size=(nmax,nmax))
     yran = np.random.randint(0,high=nmax, size=(nmax,nmax))
     aran = np.random.normal(scale=scale, size=(nmax,nmax))
+
     #for i in range(nmax):
      #   for j in range(nmax):
       #      ix = xran[i,j]
@@ -320,10 +323,12 @@ def main(program, nsteps, nmax, temp, pflag):
         ratio[it] = MC_step(lattice,temp,nmax)
         energy[it] = all_energy(lattice,nmax)
         order[it] = get_order(lattice,nmax)
+        
     #i = np.linspace(1, nmax, nmax)    
     #ratio = MC_step(lattice, temp, nmax)
     #energy = all_energy(lattice, nmax)
     #order = get_order(lattice, nmax)
+
     final = time.time()
     runtime = final-initial
     
