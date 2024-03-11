@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from cython_leb_lash import initdat
 from cython_leb_lash import plotdat
 from cython_leb_lash import savedat
