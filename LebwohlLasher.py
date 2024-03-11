@@ -41,6 +41,8 @@ def initdat(nmax):
 	Returns:
 	  arr (float(nmax,nmax)) = array to hold lattice.
     """
+    # Change random.random_sample to random.default as per recommended numpy documentation?
+    
     arr = np.random.random_sample((nmax,nmax))*2.0*np.pi
     return arr
 #=======================================================================
@@ -67,14 +69,23 @@ def plotdat(arr,pflag,nmax):
         return
     u = np.cos(arr)
     v = np.sin(arr)
-    x = np.arange(nmax)
-    y = np.arange(nmax)
+    
+    # Create two 2d arrays showing the points in a grid (for the quiver plot)
+    x, y = np.meshgrid(np.arange(nmax), np.arange(nmax))
+    
+    # x = np.arange(nmax)
+    # y = np.arange(nmax)
+    
     cols = np.zeros((nmax,nmax))
+    
     if pflag==1: # colour the arrows according to energy
         mpl.rc('image', cmap='rainbow')
-        for i in range(nmax):
-            for j in range(nmax):
-                cols[i,j] = one_energy(arr,i,j,nmax)
+        #for i in range(nmax):
+         #   for j in range(nmax):
+        a, b = np.meshgrid(np.arange(nmax), np.arange(nmax))
+        all_energy = one_energy(arr, a, b, nmax)
+        cols = all_energy.sum(axis=0)
+                #cols[i,j] = one_energy(arr,i,j,nmax)
         norm = plt.Normalize(cols.min(), cols.max())
     elif pflag==2: # colour the arrows according to angle
         mpl.rc('image', cmap='hsv')
@@ -152,6 +163,7 @@ def one_energy(arr,ix,iy,nmax):
 # Add together the 4 neighbour contributions
 # to the energy
 #
+
     ang = arr[ix,iy]-arr[ixp,iy]
     en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     ang = arr[ix,iy]-arr[ixm,iy]
@@ -174,9 +186,13 @@ def all_energy(arr,nmax):
 	  enall (float) = reduced energy of lattice.
     """
     enall = 0.0
-    for i in range(nmax):
-        for j in range(nmax):
-            enall += one_energy(arr,i,j,nmax)
+    
+    a, b = np.meshgrid(np.arange(nmax), np.arange(nmax))
+    #for i in range(nmax):
+       # for j in range(nmax):
+    all_energy = one_energy(arr, a, b, nmax)
+    enall = all_energy.sum(axis=0)
+    #enall += one_energy(arr,i,j,nmax)
     return enall
 #=======================================================================
 def get_order(arr,nmax):
@@ -326,6 +342,24 @@ def main(program, nsteps, nmax, temp, pflag):
     #order = get_order(lattice, nmax)
     final = time.time()
     runtime = final-initial
+    
+    ratio = ratio.tolist()
+    energy = energy.tolist()
+    order = order.tolist()
+    
+    ratio = np.array(ratio)
+    energy = np.array(energy)
+    order = np.array(order)
+    
+    ### TEMP CHANGES TO TEST
+    
+    
+    
+    
+    
+    ### END OF TEMP CHANGES
+    
+    
     
     # Final outputs
     print("{}: Size: {:d}, Steps: {:d}, T*: {:5.3f}: Order: {:5.3f}, Time: {:8.6f} s".format(program, nmax,nsteps,temp,order[nsteps-1],runtime))
