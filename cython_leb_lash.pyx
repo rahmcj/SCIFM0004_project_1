@@ -189,11 +189,11 @@ def get_order(np.ndarray[np.float64_t, ndim=2] arr, int nmax):
 	Returns:
 	  max(eigenvalues(Qab)) (float) = order parameter for lattice.
     """
+    Qab = np.zeros((3, 3))
+    
     cdef:
-        np.ndarray[np.float64_t, ndim=2] Qab = np.zeros((3, 3), dtype=np.float64)
         np.ndarray[np.float64_t, ndim=2] delta = np.eye(3, dtype=np.float64)
         np.ndarray[np.float64_t, ndim=3] lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
-        np.ndarray[np.float64_t, ndim=1] eigenvalues, eigenvectors
 
     #
     # Generate a 3D unit vector for each cell (i,j) and
@@ -235,7 +235,7 @@ def MC_step(np.ndarray[dtype_t, ndim=2] arr, dtype_t Ts, int nmax):
         int accept = 0
         int[:,:] xran = np.random.randint(0,high=nmax, size=(nmax,nmax), dtype=np.int32)
         int [:,:] yran = np.random.randint(0,high=nmax, size=(nmax,nmax), dtype=np.int32)
-        float[:,:] aran = np.random.normal(scale=scale, size=(nmax,nmax))
+        float[:,:] aran = np.random.normal(scale=scale, size=(nmax,nmax)).astype(np.float32)
         int i, j, ix, iy
         float ang , en0, en1, boltz
     
