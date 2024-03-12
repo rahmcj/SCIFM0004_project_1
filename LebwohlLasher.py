@@ -28,7 +28,7 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from numba import jit
+from numba import jit, prange
 
 #=======================================================================
 @jit (nopython=True)
@@ -185,7 +185,7 @@ def all_energy(arr,nmax):
             enall += one_energy(arr,i,j,nmax)
     return enall
 #=======================================================================
-@jit (nopython=True)
+@jit (nopython=True, parallel=True)
 def get_order(arr,nmax):
     """
     Arguments:
@@ -205,7 +205,7 @@ def get_order(arr,nmax):
     # put it in a (3,i,j) array.
     #
     lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
-    for a in range(3):
+    for a in prange(3):
         for b in range(3):
             for i in range(nmax):
                 for j in range(nmax):
