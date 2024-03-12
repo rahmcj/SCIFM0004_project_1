@@ -12,6 +12,8 @@ ctypedef np.float64_t dtype_t
 
 
 #=======================================================================
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def initdat(int nmax):
     """
     Arguments:
@@ -24,13 +26,14 @@ def initdat(int nmax):
 	  arr (float(nmax,nmax)) = array to hold lattice.
     """
     
-    cdef np.ndarray[dtype_t, ndim=2] arr
-    arr = np.random.random_sample((nmax,nmax))*2.0 * np.pi
+    cdef double [:, ::1] arr = np.random.random_sample((nmax,nmax))*2.0 * np.pi
     return arr
 
 
 #=======================================================================
-def plotdat(np.ndarray[np.float64_t, ndim=2] arr,int pflag,int nmax):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def plotdat(double [:,::1] arr,int pflag,int nmax):
     """
     Arguments:
 	  arr (np.ndarray[np.float64_t, ndim=2]) = array that contains lattice data;
@@ -86,11 +89,13 @@ def plotdat(np.ndarray[np.float64_t, ndim=2] arr,int pflag,int nmax):
     ax.set_aspect('equal')
     plt.show()
 #=======================================================================
-def savedat(np.ndarray[np.float64_t, ndim=2] arr,int nsteps, np.float64_t Ts, runtime ,np.ndarray[np.float64_t, ndim=1] ratio, np.ndarray[np.float64_t, ndim=1] energy, np.ndarray[np.float64_t, ndim=1] order, int nmax):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def savedat(double [:, ::1] arr,int nsteps, np.float64_t Ts, runtime ,double[::1] ratio, double[::1] energy, double[::1] order, int nmax):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
-	  nsteps (int) = number of Monte Carlo steps (MCS) performed;
+	  nsteps (int) = number of Monte Carlos (MCS) performed;
 	  Ts (float) = reduced temperature (range 0 to 2);
 	  ratio (float(nsteps)) = array of acceptance ratios per MCS;
 	  energy (float(nsteps)) = array of reduced energies per MCS;
@@ -123,7 +128,9 @@ def savedat(np.ndarray[np.float64_t, ndim=2] arr,int nsteps, np.float64_t Ts, ru
         print("   {:05d}    {:6.4f} {:12.4f}  {:6.4f} ".format(i,ratio[i],energy[i],order[i]),file=FileOut)
     FileOut.close()
 #=======================================================================
-def one_energy(np.ndarray[dtype_t, ndim=2] arr, int ix, int iy, int nmax):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def one_energy(double [:,::1] arr, int ix, int iy, int nmax):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -158,7 +165,9 @@ def one_energy(np.ndarray[dtype_t, ndim=2] arr, int ix, int iy, int nmax):
     en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     return en
 #=======================================================================
-def all_energy(np.ndarray[dtype_t, ndim=2] arr, int nmax):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def all_energy(double [:,::1] arr, int nmax):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -177,7 +186,8 @@ def all_energy(np.ndarray[dtype_t, ndim=2] arr, int nmax):
             enall += one_energy(arr,i,j,nmax)
     return enall
 #=======================================================================
-def get_order(np.ndarray[np.float64_t, ndim=2] arr, int nmax):
+
+def get_order(double [:, ::1] arr, int nmax):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -209,7 +219,9 @@ def get_order(np.ndarray[np.float64_t, ndim=2] arr, int nmax):
     eigenvalues,eigenvectors = np.linalg.eig(Qab)
     return eigenvalues.max()
 #=======================================================================
-def MC_step(np.ndarray[dtype_t, ndim=2] arr, dtype_t Ts, int nmax):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def MC_step(double [:, ::1] arr, dtype_t Ts, int nmax):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -260,6 +272,8 @@ def MC_step(np.ndarray[dtype_t, ndim=2] arr, dtype_t Ts, int nmax):
                     arr[ix,iy] -= ang
     return accept/(nmax*nmax)
 #=======================================================================
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def main(str program, int nsteps, int nmax, float temp, int pflag):
     """
     Arguments:
@@ -276,10 +290,10 @@ def main(str program, int nsteps, int nmax, float temp, int pflag):
     # Create and initialise lattice
     
     cdef:
-        np.ndarray[dtype_t, ndim=2] lattice = initdat(nmax)
-        np.ndarray[dtype_t, ndim=1] energy = np.zeros(nsteps+1,dtype=np.float64)
-        np.ndarray[dtype_t, ndim=1] ratio = np.zeros(nsteps+1,dtype=np.float64)
-        np.ndarray[dtype_t, ndim=1] order = np.zeros(nsteps+1,dtype=np.float64)
+        double [:, ::1] lattice = initdat(nmax)
+        double[::1] energy = np.zeros(nsteps+1,dtype=np.double)
+        double[::1] ratio = np.zeros(nsteps+1,dtype=np.double)
+        double[::1] order = np.zeros(nsteps+1,dtype=np.double)
     
     # Plot initial frame of lattice
     plotdat(lattice,pflag,nmax)
