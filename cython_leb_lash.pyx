@@ -202,9 +202,10 @@ def get_order(double [:, ::1] arr, int nmax):
 	Returns:
 	  max(eigenvalues(Qab)) (float) = order parameter for lattice.
     """
-    Qab = np.zeros((3, 3))
+
     
     cdef:
+        np.ndarray[np.float64_t, ndim=2] Qab = np.zeros((3, 3))
         np.ndarray[np.float64_t, ndim=2] delta = np.eye(3, dtype=np.float64)
         np.ndarray[np.float64_t, ndim=3] lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
 
