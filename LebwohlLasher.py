@@ -28,9 +28,11 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from numba import jit, prange
 
 #=======================================================================
-def initdat(nmax):
+# @jit (nopython=True)
+def initdat(nmax: int):
     """
     Arguments:
       nmax (int) = size of lattice to create (nmax,nmax).
@@ -44,7 +46,8 @@ def initdat(nmax):
     arr = np.random.random_sample((nmax,nmax))*2.0*np.pi
     return arr
 #=======================================================================
-def plotdat(arr,pflag,nmax):
+# Don't use jit for plotdat as it uses mpl 
+def plotdat(arr: np.ndarray,pflag: int,nmax: int):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -91,6 +94,7 @@ def plotdat(arr,pflag,nmax):
     ax.set_aspect('equal')
     plt.show()
 #=======================================================================
+
 def savedat(arr,nsteps,Ts,runtime,ratio,energy,order,nmax):
     """
     Arguments:
@@ -128,6 +132,7 @@ def savedat(arr,nsteps,Ts,runtime,ratio,energy,order,nmax):
         print("   {:05d}    {:6.4f} {:12.4f}  {:6.4f} ".format(i,ratio[i],energy[i],order[i]),file=FileOut)
     FileOut.close()
 #=======================================================================
+@jit (nopython=True)
 def one_energy(arr,ix,iy,nmax):
     """
     Arguments:
@@ -162,6 +167,7 @@ def one_energy(arr,ix,iy,nmax):
     en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     return en
 #=======================================================================
+@jit (nopython=True, parallel=True)
 def all_energy(arr,nmax):
     """
     Arguments:
@@ -174,11 +180,12 @@ def all_energy(arr,nmax):
 	  enall (float) = reduced energy of lattice.
     """
     enall = 0.0
-    for i in range(nmax):
+    for i in prange(nmax):
         for j in range(nmax):
             enall += one_energy(arr,i,j,nmax)
     return enall
 #=======================================================================
+@jit (nopython=True, parallel=True)
 def get_order(arr,nmax):
     """
     Arguments:
@@ -198,7 +205,7 @@ def get_order(arr,nmax):
     # put it in a (3,i,j) array.
     #
     lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
-    for a in range(3):
+    for a in prange(3):
         for b in range(3):
             for i in range(nmax):
                 for j in range(nmax):
@@ -207,6 +214,7 @@ def get_order(arr,nmax):
     eigenvalues,eigenvectors = np.linalg.eig(Qab)
     return eigenvalues.max()
 #=======================================================================
+
 def MC_step(arr,Ts,nmax):
     """
     Arguments:
@@ -254,7 +262,8 @@ def MC_step(arr,Ts,nmax):
                     arr[ix,iy] -= ang
     return accept/(nmax*nmax)
 #=======================================================================
-def main(program, nsteps, nmax, temp, pflag):
+
+def main(program: str, nsteps: int, nmax: int, temp: float, pflag: int):
     """
     Arguments:
 	  program (string) = the name of the program;
