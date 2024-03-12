@@ -197,6 +197,7 @@ def get_order(arr,nmax):
     #
     lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
     three_lab = 3*lab
+    
     for a in range(3):
         for b in range(3):
             for i in range(nmax):
