@@ -9,7 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 ctypedef np.float64_t dtype_t
+from libc.math cimport sin, cos
+from cmath import pi
 
+# need to compile with -lm flag to link to the math library
 
 #=======================================================================
 @cython.boundscheck(False)
