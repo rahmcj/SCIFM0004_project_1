@@ -4,6 +4,8 @@ import sys
 import time
 import datetime
 cimport cython
+from cython.parallel cimport prange # importing the parallel loop command
+cimport openmp                         # importing the openmp interface
 cimport numpy as np
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +13,7 @@ import matplotlib as mpl
 ctypedef np.float64_t dtype_t
 from libc.math cimport sin, cos
 from cmath import pi
+
 
 # need to compile with -lm flag to link to the math library
 
@@ -224,7 +227,7 @@ def get_order(double [:, ::1] arr, int nmax):
 #=======================================================================
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def MC_step(double [:, ::1] arr, dtype_t Ts, int nmax):
+def MC_step(double [:, ::1] arr, dtype_t Ts, int nmax, int threads):
     """
     Arguments:
 	  arr (float(nmax,nmax)) = array that contains lattice data;
@@ -254,7 +257,7 @@ def MC_step(double [:, ::1] arr, dtype_t Ts, int nmax):
         int i, j, ix, iy
         float ang , en0, en1, boltz
     
-    for i in range(nmax):
+    for i in range(nmax, nogil=True, num_threads=threads):
         for j in range(nmax):
             ix = xran[i,j]
             iy = yran[i,j]
@@ -277,7 +280,7 @@ def MC_step(double [:, ::1] arr, dtype_t Ts, int nmax):
 #=======================================================================
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def main(str program, int nsteps, int nmax, float temp, int pflag):
+def main(str program, int nsteps, int nmax, float temp, int pflag, int threads):
     """
     Arguments:
 	  program (string) = the name of the program;
@@ -291,6 +294,7 @@ def main(str program, int nsteps, int nmax, float temp, int pflag):
       NULL
     """
     # Create and initialise lattice
+    
     
     cdef:
         double [:, ::1] lattice = initdat(nmax)
@@ -310,12 +314,12 @@ def main(str program, int nsteps, int nmax, float temp, int pflag):
     order[0] = get_order(lattice,nmax)
 
     # Begin doing and timing some MC steps.
-    initial = time.time()
-    for it in range(1,nsteps+1):
+    initial = openmp.omp_get_wtime()
+    for it in prange(1,nsteps+1):
         ratio[it] = MC_step(lattice,temp,nmax)
         energy[it] = all_energy(lattice,nmax)
         order[it] = get_order(lattice,nmax)
-    final = time.time()
+    final = openmp.omp_get_wtime()
     runtime = final-initial
     
     # Final outputs
