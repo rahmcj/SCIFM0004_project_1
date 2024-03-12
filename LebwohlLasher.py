@@ -41,8 +41,6 @@ def initdat(nmax):
 	Returns:
 	  arr (float(nmax,nmax)) = array to hold lattice.
     """
-    # Change random.random_sample to random.default as per recommended numpy documentation?
-    
     arr = np.random.random_sample((nmax,nmax))*2.0*np.pi
     return arr
 #=======================================================================
@@ -69,23 +67,14 @@ def plotdat(arr,pflag,nmax):
         return
     u = np.cos(arr)
     v = np.sin(arr)
-    
-    # Create two 2d arrays showing the points in a grid (for the quiver plot)
-    x, y = np.meshgrid(np.arange(nmax), np.arange(nmax))
-    
-    # x = np.arange(nmax)
-    # y = np.arange(nmax)
-    
+    x = np.arange(nmax)
+    y = np.arange(nmax)
     cols = np.zeros((nmax,nmax))
-    
     if pflag==1: # colour the arrows according to energy
         mpl.rc('image', cmap='rainbow')
-        #for i in range(nmax):
-         #   for j in range(nmax):
-        a, b = np.meshgrid(np.arange(nmax), np.arange(nmax))
-        all_energy = one_energy(arr, a, b, nmax)
-        cols = all_energy.sum(axis=0)
-                #cols[i,j] = one_energy(arr,i,j,nmax)
+        for i in range(nmax):
+            for j in range(nmax):
+                cols[i,j] = one_energy(arr,i,j,nmax)
         norm = plt.Normalize(cols.min(), cols.max())
     elif pflag==2: # colour the arrows according to angle
         mpl.rc('image', cmap='hsv')
@@ -163,7 +152,6 @@ def one_energy(arr,ix,iy,nmax):
 # Add together the 4 neighbour contributions
 # to the energy
 #
-
     ang = arr[ix,iy]-arr[ixp,iy]
     en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     ang = arr[ix,iy]-arr[ixm,iy]
@@ -186,13 +174,9 @@ def all_energy(arr,nmax):
 	  enall (float) = reduced energy of lattice.
     """
     enall = 0.0
-    
-    a, b = np.meshgrid(np.arange(nmax), np.arange(nmax))
-    #for i in range(nmax):
-       # for j in range(nmax):
-    all_energy = one_energy(arr, a, b, nmax)
-    enall = all_energy.sum(axis=0)
-    #enall += one_energy(arr,i,j,nmax)
+    for i in range(nmax):
+        for j in range(nmax):
+            enall += one_energy(arr,i,j,nmax)
     return enall
 #=======================================================================
 def get_order(arr,nmax):
@@ -210,21 +194,18 @@ def get_order(arr,nmax):
     Qab = np.zeros((3,3))
     delta = np.eye(3,3)
     #
-    
-    #
-    lab = np.vstack((np.cos(arr), np.sin(arr), np.zeros_like(arr))).reshape(3, nmax, nmax)
-    Qab = np.sum(3 * lab[:, np.newaxis, :, :, np.newaxis] * lab[np.newaxis, :, :, :, np.newaxis], axis=(2, 3)) - delta
-    
     # Generate a 3D unit vector for each cell (i,j) and
     # put it in a (3,i,j) array.
-    
-    #for a in range(3):
-     #   for b in range(3):
-      #      for i in range(nmax):
-       #         for j in range(nmax):
-                  #  Qab[a,b] += 3*lab[a,i,j]*lab[b,i,j] - delta[a,b]
-    Qab /= (2 * nmax * nmax)
-    eigenvalues, _ = np.linalg.eig(Qab)
+    #
+    lab = np.vstack((np.cos(arr),np.sin(arr),np.zeros_like(arr))).reshape(3,nmax,nmax)
+    three_lab = 3*lab
+    for a in range(3):
+        for b in range(3):
+            for i in range(nmax):
+                for j in range(nmax):
+                    Qab[a,b] += three_lab[a,i,j]*lab[b,i,j] - delta[a,b]
+    Qab = Qab/(2*nmax*nmax)
+    eigenvalues,eigenvectors = np.linalg.eig(Qab)
     return eigenvalues.max()
 #=======================================================================
 def MC_step(arr,Ts,nmax):
@@ -253,55 +234,26 @@ def MC_step(arr,Ts,nmax):
     xran = np.random.randint(0,high=nmax, size=(nmax,nmax))
     yran = np.random.randint(0,high=nmax, size=(nmax,nmax))
     aran = np.random.normal(scale=scale, size=(nmax,nmax))
-    #for i in range(nmax):
-     #   for j in range(nmax):
-      #      ix = xran[i,j]
-       #     iy = yran[i,j]
-        #    ang = aran[i,j]
-         #   en0 = one_energy(arr,ix,iy,nmax)
-    
-    # Could this be computed before? - no
-    en0 = one_energy(arr, xran, yran, nmax)
-    
-    # change all random numbers on lattice sites
-    new_arr = arr + aran
-    
-    en1 = one_energy(new_arr, xran, yran, nmax)
-            #arr[ix,iy] += ang
-            #en1 = one_energy(arr,ix,iy,nmax)
-            
-    # compare en1 with en2 and get true/false value in array if en1 <= en0        
-    accept_value = en1 <= en0
-    count_accept = 0
-    # Count number of accepted en changes
-    count_accept += np.sum(accept_value)
-    
-    # Now apply the Monte Carlo test - compare
-    # exp( -(E_new - E_old) / T* ) >= rand(0,1)
-    boltz = np.exp( -(en1 - en0) / Ts )
-    
-    random_uniform = np.random.uniform(0.0, 1.0, size = (nmax, nmax))
-    
-    boltz_accept = boltz >= random_uniform
-    count_boltz_accept = 0
-    count_boltz_accept += np.sum(boltz_accept)
-    
-    accept_array = accept_value | boltz_accept
-    
-    new_arr = np.where(accept_array, new_arr, arr)
-    
-    accept += np.sum(boltz_accept)
-    
-    #if en1<=en0:
-     #   accept += 1
-    #else:
-            
-       # boltz = np.exp( -(en1 - en0) / Ts )
+    ran_uni = np.random.uniform(0.0,1.0)
+    for i in range(nmax):
+        for j in range(nmax):
+            ix = xran[i,j]
+            iy = yran[i,j]
+            ang = aran[i,j]
+            en0 = one_energy(arr,ix,iy,nmax)
+            arr[ix,iy] += ang
+            en1 = one_energy(arr,ix,iy,nmax)
+            if en1<=en0:
+                accept += 1
+            else:
+            # Now apply the Monte Carlo test - compare
+            # exp( -(E_new - E_old) / T* ) >= rand(0,1)
+                boltz = np.exp( -(en1 - en0) / Ts )
 
-       # if boltz >= np.random.uniform(0.0,1.0):
-            #        accept += 1
-        #else:
-         #   new_arr -= ang
+                if boltz >= ran_uni:
+                    accept += 1
+                else:
+                    arr[ix,iy] -= ang
     return accept/(nmax*nmax)
 #=======================================================================
 def main(program, nsteps, nmax, temp, pflag):
@@ -336,30 +288,8 @@ def main(program, nsteps, nmax, temp, pflag):
         ratio[it] = MC_step(lattice,temp,nmax)
         energy[it] = all_energy(lattice,nmax)
         order[it] = get_order(lattice,nmax)
-    #i = np.linspace(1, nmax, nmax)    
-    #ratio = MC_step(lattice, temp, nmax)
-    #energy = all_energy(lattice, nmax)
-    #order = get_order(lattice, nmax)
     final = time.time()
     runtime = final-initial
-    
-    ratio = ratio.tolist()
-    energy = energy.tolist()
-    order = order.tolist()
-    
-    ratio = np.array(ratio)
-    energy = np.array(energy)
-    order = np.array(order)
-    
-    ### TEMP CHANGES TO TEST
-    
-    
-    
-    
-    
-    ### END OF TEMP CHANGES
-    
-    
     
     # Final outputs
     print("{}: Size: {:d}, Steps: {:d}, T*: {:5.3f}: Order: {:5.3f}, Time: {:8.6f} s".format(program, nmax,nsteps,temp,order[nsteps-1],runtime))
