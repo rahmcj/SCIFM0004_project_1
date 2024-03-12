@@ -154,13 +154,13 @@ def one_energy(arr,ix,iy,nmax):
 #
     
     ang = arr[ix,iy]-arr[ixp,iy]
-    en += 0.5*(1.0 - 3.0*np.cos(ang)*np.cos(ang))
+    en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     ang = arr[ix,iy]-arr[ixm,iy]
-    en += 0.5*(1.0 - 3.0*np.cos(ang)*np.cos(ang))
+    en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     ang = arr[ix,iy]-arr[ix,iyp]
-    en += 0.5*(1.0 - 3.0*np.cos(ang)*np.cos(ang))
+    en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     ang = arr[ix,iy]-arr[ix,iym]
-    en += 0.5*(1.0 - 3.0*np.cos(ang)*np.cos(ang))
+    en += 0.5*(1.0 - 3.0*np.cos(ang)**2)
     return en
 #=======================================================================
 def all_energy(arr,nmax):
@@ -174,10 +174,7 @@ def all_energy(arr,nmax):
 	Returns:
 	  enall (float) = reduced energy of lattice.
     """
-    enall = 0.0
-    for i in range(nmax):
-        for j in range(nmax):
-            enall += one_energy(arr,i,j,nmax)
+    enall = np.sum(one_energy(arr, np.arange(nmax), np.arange(nmax), nmax))
     return enall
 #=======================================================================
 def get_order(arr,nmax):
